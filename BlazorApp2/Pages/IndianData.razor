@@ -1,0 +1,140 @@
+﻿@page "/indiadata"
+@using Syncfusion.Blazor.Grids
+@using Syncfusion.Blazor.Cards
+@using Newtonsoft.Json
+
+<h3>Indian Data</h3>
+<div class="control-section">
+    <div class="row">
+        <div class="col-xs-6 col-sm-6 col-lg-4 col-md-4">
+            <SfCard>
+                <CardHeader Title="Total" />
+                <CardContent Content=@Orders.data.summary.total.ToString() />
+            </SfCard>
+        </div>
+
+        <div class="col-xs-6 col-sm-6 col-lg-4 col-md-4">
+            <SfCard>
+                <CardHeader Title="Indian" />
+                <CardContent Content=@Orders.data.summary.confirmedCasesIndian.ToString() />
+            </SfCard>
+        </div>
+
+        <div class="col-xs-6 col-sm-6 col-lg-4 col-md-4">
+            <SfCard>
+                <CardHeader Title="Foreign" />
+                <CardContent Content=@Orders.data.summary.confirmedCasesForeign.ToString() />
+            </SfCard>
+        </div>
+
+        <div class="col-xs-6 col-sm-6 col-lg-4 col-md-4">
+            <SfCard>
+                <CardHeader Title="Deaths" />
+                <CardContent Content=@Orders.data.summary.deaths.ToString() />
+            </SfCard>
+        </div>
+
+        <div class="col-xs-6 col-sm-6 col-lg-4 col-md-4">
+            <SfCard>
+                <CardHeader Title="Recovered" />
+                <CardContent Content=@Orders.data.summary.discharged.ToString() />
+            </SfCard>
+        </div>
+    </div>
+    
+</div>
+
+
+<div class="control-section">
+    <SfGrid DataSource="@ListRegional" AllowSorting="true" AllowFiltering="true">
+
+    </SfGrid>
+</div>
+
+    @code {
+
+        public IndianDataClass Orders { get; set; }
+        public List<Regional> ListRegional { get; set; }
+
+
+        protected override void OnInitialized()
+        {
+
+            var uri = new Uri("https://api.rootnet.in/covid19-in/stats/latest");
+
+            using (HttpClient client = new HttpClient())
+            {
+                var response = client.GetAsync(uri).Result;
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = response.Content.ReadAsStringAsync().Result;
+                    var serializerSettings = new JsonSerializerSettings();
+                    serializerSettings.NullValueHandling = NullValueHandling.Ignore;
+                    Orders = JsonConvert.DeserializeObject<IndianDataClass>(content, serializerSettings);
+                    if (Orders != null)
+                    {
+                        ListRegional = new List<Regional>();
+                        ListRegional = Orders.data.regional.ToList();
+                    }
+
+                }
+            }
+
+
+            //Orders = Enumerable.Range(1, 75).Select(x => new Order()
+            //{
+            //    OrderID = 1000 + x,
+            //    CustomerID = (new string[] { "ALFKI", "ANANTR", "ANTON", "BLONP", "BOLID" })[new Random().Next(5)],
+            //    Freight = 2.1 * x,
+            //    OrderDate = DateTime.Now.AddDays(-x),
+            //}).ToList();
+        }
+
+        //public class Order
+        //{
+        //    public int? OrderID { get; set; }
+        //    public string CustomerID { get; set; }
+        //    public DateTime? OrderDate { get; set; }
+        //    public double? Freight { get; set; }
+        //}
+
+        public class IndianDataClass
+        {
+            public bool success { get; set; }
+
+            public Data data { get; set; }
+            public DateTime lastRefreshed { get; set; }
+            public DateTime lastOriginUpdate { get; set; }
+        }
+        public class Summary
+        {
+            public int total { get; set; }
+            public int confirmedCasesIndian { get; set; }
+            public int confirmedCasesForeign { get; set; }
+            public int discharged { get; set; }
+            public int deaths { get; set; }
+            public int confirmedButLocationUnidentified { get; set; }
+        }
+
+        public class Regional
+        {
+            [JsonProperty("loc")]
+            public string State { get; set; }
+            [JsonProperty("confirmedCasesIndian")]
+            public int Indian { get; set; }
+            [JsonProperty("confirmedCasesForeign")]
+            public int Foreigners { get; set; }
+            [JsonProperty("discharged")]
+            public int Recovered { get; set; }
+            [JsonProperty("deaths")]
+            public int Deaths { get; set; }
+        }
+
+
+        public class Data
+        {
+            public Summary summary { get; set; }
+            public List<Regional> regional { get; set; }
+        }
+    }

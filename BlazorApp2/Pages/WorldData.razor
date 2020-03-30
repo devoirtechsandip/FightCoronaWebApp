@@ -1,0 +1,130 @@
+﻿@page "/worlddata"
+@using Syncfusion.Blazor.Grids
+@using Syncfusion.Blazor.Cards
+@using Newtonsoft.Json
+
+<h3>World Data</h3>
+
+<div class="control-section">
+    <div class="row">
+        <div class="col-xs-6 col-sm-6 col-lg-3 col-md-3">
+            <SfCard>
+                <CardHeader Title="Total" />
+                <CardContent Content=@lstWorldData.cases.ToString() />
+            </SfCard>
+        </div>
+
+        <div class="col-xs-6 col-sm-6 col-lg-3 col-md-3">
+            <SfCard>
+                <CardHeader Title="Deaths" />
+                <CardContent Content=@lstWorldData.deaths.ToString() />
+            </SfCard>
+        </div>
+
+        <div class="col-xs-6 col-sm-6 col-lg-3 col-md-3">
+            <SfCard>
+                <CardHeader Title="Recovered" />
+                <CardContent Content=@lstWorldData.recovered.ToString() />
+            </SfCard>
+        </div>
+
+        <div class="col-xs-6 col-sm-6 col-lg-3 col-md-3">
+            <SfCard>
+                <CardHeader Title="Active" />
+                <CardContent Content=@lstWorldData.active.ToString() />
+            </SfCard>
+        </div>
+
+        
+    </div>
+
+</div>
+
+<div class="control-section">
+    <SfGrid DataSource="@ListRegional" AllowSorting="true" AllowFiltering="true">
+
+    </SfGrid>
+</div>
+
+    @code {
+
+        //public IndianDataClass Orders { get; set; }
+        public List<CountryData> ListRegional { get; set; }
+        public WorldTotalData lstWorldData { get; set; }
+
+
+        protected override void OnInitialized()
+        {
+
+            var uri = new Uri("https://corona.lmao.ninja/countries");
+
+            using (HttpClient client = new HttpClient())
+            {
+                var response = client.GetAsync(uri).Result;
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = response.Content.ReadAsStringAsync().Result;
+                    var serializerSettings = new JsonSerializerSettings();
+                    serializerSettings.NullValueHandling = NullValueHandling.Ignore;
+                    ListRegional = JsonConvert.DeserializeObject<List<CountryData>>(content, serializerSettings);
+
+
+                }
+            }
+
+            uri = new Uri("https://corona.lmao.ninja/all");
+            using (HttpClient client = new HttpClient())
+            {
+                var response = client.GetAsync(uri).Result;
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = response.Content.ReadAsStringAsync().Result;
+                    var serializerSettings = new JsonSerializerSettings();
+                    serializerSettings.NullValueHandling = NullValueHandling.Ignore;
+                    lstWorldData = JsonConvert.DeserializeObject<WorldTotalData>(content, serializerSettings);
+
+
+                }
+            }
+
+
+            //Orders = Enumerable.Range(1, 75).Select(x => new Order()
+            //{
+            //    OrderID = 1000 + x,
+            //    CustomerID = (new string[] { "ALFKI", "ANANTR", "ANTON", "BLONP", "BOLID" })[new Random().Next(5)],
+            //    Freight = 2.1 * x,
+            //    OrderDate = DateTime.Now.AddDays(-x),
+            //}).ToList();
+        }
+
+        //public class Order
+        //{
+        //    public int? OrderID { get; set; }
+        //    public string CustomerID { get; set; }
+        //    public DateTime? OrderDate { get; set; }
+        //    public double? Freight { get; set; }
+        //}
+
+        public class CountryData
+        {
+            public string Country { get; set; }
+            public int Cases { get; set; }
+            public int TodayCases { get; set; }
+            public int Deaths { get; set; }
+            public int TodayDeaths { get; set; }
+            public int Recovered { get; set; }
+            public int Critical { get; set; }
+        }
+
+        public class WorldTotalData
+        {
+
+            public int cases { get; set; }
+            public int deaths { get; set; }
+            public int recovered { get; set; }
+            public long updated { get; set; }
+            public int active { get; set; }
+        }
+    }
